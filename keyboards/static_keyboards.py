@@ -5,3 +5,5 @@ settings_keyboard = ReplyKeyboardMarkup([['Change Language'], ['Change Phone'],[
 phone_keyboard = ReplyKeyboardMarkup([[KeyboardButton('Share contact', request_contact=True)]], resize_keyboard=True)
 ortga = ReplyKeyboardMarkup([['◀Orqaga Uz']], resize_keyboard=True)
 confirm_keyboard = ReplyKeyboardMarkup([['✅  TASDIQLASH']], resize_keyboard=True)
+
+payment_last = ReplyKeyboardMarkup([['✅ To\'lash']], resize_keyboard=True)

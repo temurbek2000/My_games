@@ -29,7 +29,7 @@ def main():
                 MessageHandler(Filters.text, lang_change)
             ],
             'phone_change': [
-                MessageHandler(Filters.text, phone_change)
+                MessageHandler(Filters.contact, phone_change)
             ],
             'game_select': [
                 MessageHandler(Filters.text,game_select)
@@ -39,6 +39,12 @@ def main():
             ],
             'buy_select': [
                 MessageHandler(Filters.text,buy_select)
+            ],
+            'confirm': [
+                MessageHandler(Filters.text,confirm)
+            ],
+            'select_payment': [
+                MessageHandler(Filters.text,select_payment)
             ],
             # 'product': [
             #     CallbackQueryHandler(classess)

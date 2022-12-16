@@ -1,8 +1,10 @@
 from telegram import InlineKeyboardMarkup, KeyboardButton
 
-from keyboards.dynamic_keyboards import language_keyboard, games_keyboard
+from constants.constants import STATUSES
+from keyboards.dynamic_keyboards import language_keyboard, games_keyboard, payment_keyboards
 from keyboards.keyboards import *
-from keyboards.static_keyboards import menu_keyboard, ortga, settings_keyboard, phone_keyboard, confirm_keyboard
+from keyboards.static_keyboards import menu_keyboard, ortga, settings_keyboard, phone_keyboard, confirm_keyboard, \
+    payment_last
 
 
 def start(update,context):
@@ -43,8 +45,9 @@ def phone_send(update,context):
         return 'menu'
 
 def menu(update,context):
-    message = update.message.contact.phone_number
-    update_phone(update.message.from_user.id,message)
+    if update.message.contact:
+        message = update.message.contact.phone_number
+        update_phone(update.message.from_user.id, message)
     context.bot.send_message(chat_id=update.effective_chat.id, text="GamePin botga xush kelibsiz",
                                  reply_markup=menu_keyboard)
     return 'menu_select'
@@ -76,7 +79,7 @@ def change(update,context):
     if message == '◀Orqaga Uz' or message == '◀Orqaga Ru':
         context.bot.send_message(chat_id=update.effective_chat.id, text="GamePin botga xush kelibsiz",
                                  reply_markup=menu_keyboard)
-        return 'menu'
+        return "menu_select"
     elif message == "Change Language":
         context.bot.send_message(chat_id=update.effective_chat.id, text="Tilni tanlang:",
                                  reply_markup=lang_keyboard)
@@ -87,12 +90,20 @@ def change(update,context):
         return "phone_change"
 
 def lang_change(update,context):
-    context.bot.send_message(chat_id=update.effective_chat.id, text="Lang Saved!\n Select menu",
-                             reply_markup=menu_keyboard)
-    return "menu_select"
+    message = update.message.text
+    if message=="◀Orqaga Uz":
+        context.bot.send_message(chat_id=update.effective_chat.id, text="GamePin botga xush kelibsiz",
+                                 reply_markup=menu_keyboard)
+        return "menu_select"
+    else:
+        update_lang(update.message.from_user.id,message)
+        context.bot.send_message(chat_id=update.effective_chat.id, text="Lang Saved!\n Select menu",
+                                 reply_markup=menu_keyboard)
+        return "menu_select"
 
 def phone_change(update,context):
-
+    message = update.message.contact.phone_number
+    update_phone(update.message.from_user.id,message)
     context.bot.send_message(chat_id=update.effective_chat.id, text="Phone Saved!\n Select menu",
                              reply_markup=menu_keyboard)
     return "menu_select"
@@ -100,10 +111,17 @@ def phone_change(update,context):
 def game_select(update,context):
     message = update.message.text
     if message == "Ortga":
-        menu(update,context)
-        return 'menu_select'
+        context.bot.send_message(chat_id=update.effective_chat.id, text="GamePin botga xush kelibsiz",
+                                 reply_markup=menu_keyboard)
+        return "menu_select"
     else:
-        text = f"🎮 <{message}>\nQo'shimcha ma'lumotlar:\n1. <Paket nomi #1> - <Paket narxi #1>\n2. <Paket nomi #2> - <Paket narxi #2> "
+        game = get_game_by_name(message)
+        data = get_packages_by_game_id(game[0][0])
+        package=""
+        for i in range(0,len(data)):
+            package+=f"{i+1}. {data[i][2]} - {data[i][3]} \n"
+
+        text = f"🎮 <{message}>\nQo'shimcha ma'lumotlar:\n{package} "
         context.bot.send_message(chat_id=update.effective_chat.id, text=text,
                                  reply_markup=ReplyKeyboardMarkup(package_keyboard(message), resize_keyboard=True))
         return "package_select"
@@ -112,7 +130,9 @@ def game_select(update,context):
 def package_select(update,context):
     message = update.message.text
     if message == "Ortga":
-        game_select(update,context)
+        context.bot.send_message(chat_id=update.effective_chat.id, text="GamePin botga xush kelibsiz",
+                                 reply_markup=menu_keyboard)
+        return "menu_select"
     else:
 
         data = get_package_by_name(message)
@@ -120,7 +140,7 @@ def package_select(update,context):
         add_product(get_game_by_name(game_name)[0][0],data[0][0],update.message.from_user.id,data[0][3])
         text = f"🎮 {game_name}\n" \
                f"📦 {message} \n" \
-               f"💰 {data[0][3]} $"
+               f"💰 {data[0][3]} "
         context.bot.send_message(chat_id=update.effective_chat.id, text=text,
                                  reply_markup=buy_keyboard)
         return 'buy_select'
@@ -128,7 +148,9 @@ def package_select(update,context):
 def buy_select(update,context):
     message = update.message.text
     if message == "◀Orqaga Uz":
-        game_select(update,context)
+        context.bot.send_message(chat_id=update.effective_chat.id, text="GamePin botga xush kelibsiz",
+                                 reply_markup=menu_keyboard)
+        return "menu_select"
     else:
         tg_id = update.message.from_user.id
         product = get_products(tg_id)[-1]
@@ -137,7 +159,7 @@ def buy_select(update,context):
         gamer_id = get_gamer_id_by_tg_id(tg_id)[0][0]
         text = f"Sizning buyurtmangiz:\n🎮 {game_name}\n" \
                f"📦 {package_name} \n" \
-               f"💰 {product[4]} $\n " \
+               f"💰 {product[4]} \n " \
                f"🆔 {gamer_id} \n" \
                f"💻 1 \n" \
                f"Umumiy to'lov qiymati: {product[4]}"
@@ -148,3 +170,21 @@ def buy_select(update,context):
 
 
 
+def confirm(update,context):
+    message = update.message.text
+    if message == "✅  TASDIQLASH":
+            text = "Sizning buyurtmangiz qabul qilindi. Iltimos to'lov usulini tanlang!"
+            context.bot.send_message(chat_id=update.effective_chat.id, text=text,
+                                     reply_markup=ReplyKeyboardMarkup(payment_keyboards(),resize_keyboard=True))
+            return 'select_payment'
+
+def select_payment(update,context):
+    message = update.message.text
+    tg_id = update.message.from_user.id
+    product = get_products(tg_id)[-1]
+    print(product[1],product[2],product[0],"",STATUSES[0],message,)
+    # add_transaction(product[1],product[2],product[0],"1",STATUSES[0],message,1,"1","1")
+    text = f"""{message} orqali to'lash \nTo'lov qiymati: {product[4]} \nTo'lovni amalga oshirish uchun "✅ To'lash" tugmasini bosing."""
+    context.bot.send_message(chat_id=update.effective_chat.id, text=text,
+                             reply_markup=payment_last)
+    return 'transaction'

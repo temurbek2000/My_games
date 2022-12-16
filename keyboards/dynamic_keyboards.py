@@ -1,6 +1,6 @@
 from telegram import ReplyKeyboardMarkup
 
-from connections.connect import get_languages, get_games
+from connections.connect import get_languages, get_games, get_payments
 
 
 def language_keyboard():
@@ -32,4 +32,12 @@ def games_keyboard():
     games.append(['Ortga'])
     return games
 
+def payment_keyboards():
+    data = get_payments()
+    payments = []
+    for i in range(0, len(data)):
+        a = [f'{data[i][1]}']
+        payments.append(a)
+    payments.append(['Ortga'])
+    return payments
 

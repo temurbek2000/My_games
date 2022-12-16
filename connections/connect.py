@@ -15,6 +15,12 @@ def add_product(game_id, package_id,gamer_tg_id,price):
     cursor.execute(f"""INSERT INTO Products(game_id,package_id,gamer_tg_id,price) VALUES("{game_id}","{package_id}","{gamer_tg_id}","{price}")""")
     con.commit()
     con.close()
+def add_transaction(game_id, package_id,product_id,amount,status,payment_organization,payment_organization_trans_id,createAt,updateId):
+    con = connect('./games.db')
+    cursor = con.cursor()
+    cursor.execute(f"""INSERT INTO Transaction(game_id,package_id,product_id,amount,status,payment_organization,payment_organization_trans_id,createAt,updateId) VALUES("{game_id}","{package_id}","{product_id}","{amount}","{status}","{payment_organization}",{payment_organization_trans_id},"{createAt}","{updateId}")""")
+    con.commit()
+    con.close()
 
 
 def get_data_users(tgid):
@@ -33,6 +39,21 @@ def get_data_users(tgid):
     con.close()
     return res
 
+
+def get_payments():
+    con = connect(
+        './games.db'
+    )
+    cursor = con.cursor()
+    sql = f"""SELECT *
+        	FROM payments
+                      """
+    cursor.execute(sql)
+    res = []
+    for i in cursor.fetchall():
+        res.append(i)
+    con.close()
+    return res
 
 def get_products(tgid):
     con = connect(
@@ -189,6 +210,13 @@ def update_name(tgid,nm):
     con = connect('./games.db')
     cursor = con.cursor()
     cursor.execute(f"""UPDATE users SET name="{nm}" WHERE tg_id={tgid}""")
+    con.commit()
+    con.close()
+
+def update_lang(tgid,lg):
+    con = connect('./games.db')
+    cursor = con.cursor()
+    cursor.execute(f"""UPDATE users SET language="{lg}" WHERE tg_id={tgid}""")
     con.commit()
     con.close()
 
